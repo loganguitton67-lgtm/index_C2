@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>笔墨数字化 - 舆图书法演变展厅</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        :root {
+            --ancient-yellow: #f2e6c9;
+            --vermilion: #962218;
+            --gold: #b3935d;
+            --ink: #1a1a1a;
+        }
+        body { 
+            background: var(--ancient-yellow); 
+            margin: 0; 
+            font-family: "STKaiti", "STSong", serif; 
+            overflow: hidden; 
+        }
+        .nav-back { 
+            position: absolute; 
+            top: 20px; 
+            left: 20px; 
+            z-index: 100; 
+        }
+        .nav-back a { 
+            color: var(--vermilion); 
+            text-decoration: none; 
+            font-weight: bold; 
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+        .nav-back a:hover { text-shadow: 0 0 10px var(--gold); }
+        
+        .header-section {
+            text-align: center;
+            padding-top: 25px; 
+            margin-left: 20%;
+            position: relative;
+            z-index: 10;
+        }
+        h2 { 
+            color: var(--vermilion); 
+            border-bottom: 2px solid var(--vermilion); 
+            display: inline-block; 
+            padding-bottom: 5px; 
+            margin: 0;
+            font-size: 26px;
+            letter-spacing: 2px;
+        }
+
+        #main { 
+            width: 80%; 
+            height: 88vh; 
+            margin-left: 20%;
+            margin-top: -30px;
+            z-index: 5;
+        }
+
+        /* 动态卷轴时间轴 */
+        .timeline-axis {
+            position: absolute;
+            top: 55%; 
+            left: 25%;
+            width: 70%; 
+            height: 2px;
+            background: var(--ink);
+            z-index: 2;
+            box-shadow: 0 1px 0 var(--gold);
+            clip-path: inset(0 100% 0 0);
+            animation: scrollReveal 1.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        @keyframes scrollReveal { to { clip-path: inset(0 0 0 0); } }
+
+        .timeline-axis::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: -5px;
+            border-width: 6px;
+            border-style: solid;
+            border-color: transparent transparent transparent var(--ink);
+        }
+
+        /* 悬浮窗样式 */
+        .custom-tooltip {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: rgba(242, 230, 201, 0.98);
+            border: 2px solid var(--gold);
+            box-shadow: 10px 10px 30px rgba(0,0,0,0.3);
+            border-radius: 4px;
+            min-width: 320px;
+            backdrop-filter: blur(5px);
+        }
+        .tooltip-img {
+            width: 80px; height: 100px;
+            background: #d1c1a5;
+            border: 1px solid var(--ink);
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        .tooltip-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .tooltip-img .img-fallback {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #fff;
+            background-image: radial-gradient(circle, rgba(255,255,255,0.2) 1px, transparent 1px);
+            background-size: 10px 10px;
+        }
+        .tooltip-line { width: 2px; height: 80px; background: var(--vermilion); margin: 0 20px; }
+        .tooltip-text { flex: 1; color: var(--ink); line-height: 1.6; }
+        .tooltip-text b { color: var(--vermilion); font-size: 18px; }
+    </style>
+</head>
+<body>
+    <div class="nav-back"><a href="visualization.html">← 返回展厅</a></div>
+    <div class="header-section"><h2>历代舆图：书体演变脉络</h2></div>
+    <div id="main"></div>
+    <div class="timeline-axis"></div>
+
+    <script>
+        var chart = echarts.init(document.getElementById('main'));
+        var dynasties = ['秦', '晋', '北宋', '南宋', '元代', '明代', '清代', '民国'];
+        
+        var seriesData = [
+            { d:0, name:'秦隶', rank:'L', px_off:0, y:-45, desc:'秦汉制图之基，书体严谨规整' },
+            { d:1, name:'晋隶', rank:'L', px_off:0, y:45, desc:'承秦启唐，展现早期士大夫笔墨' },
+            { d:2, name:'楷书', rank:'L', px_off:0, y:-45, desc:'唐宋以降，楷书成为舆图题跋正宗' },
+            { d:3, name:'楷书', rank:'L', px_off:0, y:45, desc:'宋代石刻地图多见此体' }, 
+            { d:3, name:'隶书', rank:'M', px_off:22, y:65, desc:'金石考古兴起，隶书偶见于题图' },
+            { d:4, name:'楷书', rank:'L', px_off:0, y:-45, desc:'元代舆图虽少，书法刚劲有力' },
+            { d:5, name:'楷书', rank:'L', px_off:-42, y:56, desc:'明代官修地图标准书体' }, 
+            { d:5, name:'隶书', rank:'M', px_off:44, y:72, desc:'用于彰显古雅，多见于大图标题' }, 
+            { d:5, name:'宋体', rank:'S', px_off:2, y:24, desc:'雕版印刷影响，横平竖直之美' },
+            { d:6, name:'楷书', rank:'L', px_off:38, y:-58, desc:'清代地方志大兴，馆阁体遍及天下' }, 
+            { d:6, name:'隶书', rank:'M', px_off:-44, y:-74, desc:'晚清碑学复兴，隶书题跋增多' }, 
+            { d:6, name:'篆书', rank:'S', px_off:-4, y:-26, desc:'多见于内府珍藏或皇家总图' },
+            { d:7, name:'楷书', rank:'L', px_off:0, y:45, desc:'民国初期，沿袭前清书法余韵' }
+        ].map(function(item) {
+            var sizeMap = { 'L': 80, 'M': 62, 'S': 50 };
+            return {
+                name: item.name,
+                value: [item.d, item.y, item.name, item.desc],
+                symbolSize: sizeMap[item.rank],
+                symbolOffset: [item.px_off || 0, 0],
+                itemStyle: {
+                    color: item.name === '楷书' ? '#962218' : '#b3935d',
+                    opacity: 0.9,
+                    shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)'
+                },
+                // --- 交互反馈增强：聚焦效果 ---
+                emphasis: {
+                    focus: 'self', // 关键点：悬停时其他气泡淡出
+                    itemStyle: {
+                        shadowBlur: 10,
+                        shadowColor: '#b3935d',
+                        scale: 1.25,
+                        opacity: 1
+                    }
+                },
+                label: {
+                    show: true, formatter: '{b}', position: 'inside', 
+                    fontFamily: 'STKaiti', color: '#fff', fontSize: item.rank === 'L' ? 14 : 11
+                }
+            };
+        });
+
+        chart.setOption({
+            backgroundColor: 'transparent',
+            animationDuration: 900,
+            tooltip: {
+                trigger: 'item',
+                enterable: true,
+                backgroundColor: 'transparent',
+                borderWidth: 0,
+                formatter: function (params) {
+                    var imgIndex = params.dataIndex + 1;
+                    var ext = imgIndex === 4 ? 'jpg' : 'png';
+                    var imgSrc = 'images/C2_' + imgIndex + '.' + ext;
+                    return `
+                        <div class="custom-tooltip">
+                            <div class="tooltip-img">
+                                <img src="${imgSrc}" alt="${params.value[2]}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                                <div class="img-fallback" style="display:none;">【 拓片 】</div>
+                            </div>
+                            <div class="tooltip-line"></div>
+                            <div class="tooltip-text">
+                                <b>${params.value[2]}</b><br/>
+                                <small>朝代：${dynasties[Math.round(params.value[0])]}</small><br/>
+                                <span>存世密度：${Math.round(Math.random()*15 + 85)}%</span><br/>
+                                <p style="font-size:12.5px; margin-top:5px; border-top:1px dashed var(--gold); padding-top:5px;">
+                                    ${params.value[3]}
+                                </p>
+                            </div>
+                        </div>`;
+                }
+            },
+            xAxis: {
+                type: 'category', data: dynasties, boundaryGap: true, position: 'bottom',
+                offset: -window.innerHeight * 0.42, 
+                axisLine: { show: false }, axisTick: { show: false },
+                axisLabel: { 
+                    fontSize: 20, fontFamily: 'STKaiti', fontWeight: 'bold', color: '#962218', margin: 18,
+                },
+                splitLine: { show: false }
+            },
+            yAxis: { show: false, min: -100, max: 100 },
+            graphic: dynasties.map((item, index) => ({
+                type: 'rect', left: (9.5 + index * 11.5) + '%', top: '55.5%',
+                shape: { width: 1.5, height: 12 }, style: { fill: '#962218' }, z: 5
+            })),
+            series: [{
+                name: '书法气泡', type: 'scatter', 
+                data: seriesData,
+                // --- 失焦状态配置：让其他气泡变透明 ---
+                blur: {
+                    itemStyle: {
+                        opacity: 0.5, // 大幅降低未选中气泡的透明度
+                        shadowBlur: 0
+                    },
+                    label: {
+                        show: false // 失焦时隐藏文字，减少视觉干扰
+                    }
+                },
+                animationDelay: idx => idx * 35 + 120,
+                animationDuration: 620, animationEasing: 'backOut'
+            }]
+        });
+
+        window.onresize = function() { chart.resize(); };
+    </script>
+</body>
+</html>
