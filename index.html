@@ -6,10 +6,10 @@
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <style>
         :root {
-            --ancient-yellow: #f2e6c9;
-            --vermilion: #962218;
+            --ancient-yellow: #EDE0CA;
+            --vermilion: #62B8B8;
             --gold: #b3935d;
-            --ink: #1a1a1a;
+            --ink: #5D5149;
         }
         body { 
             background: var(--ancient-yellow); 
@@ -156,7 +156,7 @@
                 symbolSize: sizeMap[item.rank],
                 symbolOffset: [item.px_off || 0, 0],
                 itemStyle: {
-                    color: item.name === '楷书' ? '#962218' : '#b3935d',
+                    color: item.name === '楷书' ? '#62B8B8' : '#145D5E',
                     opacity: 0.9,
                     shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)'
                 },
@@ -212,14 +212,14 @@
                 offset: -window.innerHeight * 0.42, 
                 axisLine: { show: false }, axisTick: { show: false },
                 axisLabel: { 
-                    fontSize: 20, fontFamily: 'STKaiti', fontWeight: 'bold', color: '#962218', margin: 18,
+                    fontSize: 20, fontFamily: 'STKaiti', fontWeight: 'bold', color: '#62B8B8', margin: 18,
                 },
                 splitLine: { show: false }
             },
             yAxis: { show: false, min: -100, max: 100 },
             graphic: dynasties.map((item, index) => ({
                 type: 'rect', left: (9.5 + index * 11.5) + '%', top: '55.5%',
-                shape: { width: 1.5, height: 12 }, style: { fill: '#962218' }, z: 5
+                shape: { width: 1.5, height: 12 }, style: { fill: '#62B8B8' }, z: 5
             })),
             series: [{
                 name: '书法气泡', type: 'scatter', 
